@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.fortyninecents.ui.aliases.AliasesScreen
 import com.fortyninecents.ui.home.HomeScreen
 import com.fortyninecents.ui.review.ReviewScreen
 import com.fortyninecents.ui.transactions.TransactionsScreen
@@ -12,6 +13,7 @@ object Routes {
     const val HOME = "home"
     const val TRANSACTIONS = "transactions"
     const val REVIEW = "review"
+    const val ALIASES = "aliases"
 }
 
 @Composable
@@ -30,10 +32,16 @@ fun AppNavHost(startDestination: String = Routes.HOME) {
             )
         }
         composable(Routes.TRANSACTIONS) {
-            TransactionsScreen(onBack = back)
+            TransactionsScreen(
+                onBack = back,
+                onOpenAliases = { navController.navigate(Routes.ALIASES) { launchSingleTop = true } },
+            )
         }
         composable(Routes.REVIEW) {
             ReviewScreen(onBack = back)
+        }
+        composable(Routes.ALIASES) {
+            AliasesScreen(onBack = back)
         }
     }
 }

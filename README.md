@@ -14,6 +14,11 @@ a partir das notificações dos apps de banco e exportação em CSV para o Googl
   Há um modo "Simular notificação" para testar o parser colando um texto.
 - **Extrato** – navegação por mês, totais de entradas/saídas/saldo, agrupamento por dia, deslizar para excluir
   (com desfazer).
+- **Apelidos** – nomes amigáveis para identificadores feios ("PAG*JOSEDASILVA" → "Feira do Zé"). Toque em
+  um lançamento no Extrato ou na Revisão, ou gerencie em *Extrato → ícone de etiqueta*. Pode valer para o
+  identificador exato ou para todo identificador que *contenha* um trecho ("UBER *TRIP"). O lançamento guarda
+  o original (o Extrato mostra-o em letra pequena abaixo do apelido); o apelido é aplicado na exibição,
+  então editar/remover vale para o histórico inteiro.
 - **Exportação CSV** – do mês ou completo, compartilhada via `Intent` (Drive, Sheets, e-mail…).
 
 ## Arquitetura
@@ -78,7 +83,8 @@ Testes unitários:
 
 ## CSV
 
-Colunas: `id, data, hora, descricao, categoria, tipo, valor, origem`. Separador vírgula, campos entre aspas,
+Colunas: `id, data, hora, descricao, categoria, tipo, valor, origem, identificador_original`
+(`descricao` traz o apelido, quando houver). Separador vírgula, campos entre aspas,
 datas `dd/MM/yyyy` e valores com vírgula decimal (`-40,00`) — formato que o Google Sheets em português
 reconhece como número. Despesas saem negativas, receitas positivas. O arquivo tem BOM UTF-8 para o Excel
 abrir os acentos corretamente. Textos que começariam com `=`, `+`, `-` ou `@` são prefixados com `'`

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,6 +71,8 @@ import com.fortyninecents.domain.Category
 import com.fortyninecents.domain.Transaction
 import com.fortyninecents.notification.BankNotificationListenerService
 import com.fortyninecents.ui.AppViewModelProvider
+import com.fortyninecents.ui.aliases.AliasesViewModel
+import com.fortyninecents.ui.aliases.TransactionAliasDialog
 import com.fortyninecents.ui.components.EmptyState
 import com.fortyninecents.ui.components.TransactionRow
 import com.fortyninecents.ui.components.UiFormat
@@ -83,8 +86,11 @@ private const val SAMPLE_NOTIFICATION =
 fun ReviewScreen(
     onBack: () -> Unit,
     viewModel: ReviewViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    aliasesViewModel: AliasesViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val aliases by aliasesViewModel.aliases.collectAsStateWithLifecycle()
+    var aliasTarget by remember { mutableStateOf<Transaction?>(null) }
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var listenerEnabled by remember { mutableStateOf(BankNotificationListenerService.isEnabled(context)) }
@@ -159,6 +165,7 @@ fun ReviewScreen(
                         onConfirm = { viewModel.confirm(transaction) },
                         onDiscard = { viewModel.discard(transaction) },
                         onCategoryChange = { viewModel.changeCategory(transaction, it) },
+                        onRename = { aliasTarget = transaction },
                     )
                 }
             } else if (!state.isLoading) {
@@ -175,6 +182,22 @@ fun ReviewScreen(
                 }
             }
         }
+    }
+
+    aliasTarget?.let { transaction ->
+        TransactionAliasDialog(
+            transaction = transaction,
+            aliases = aliases.orEmpty(),
+            onSave = {
+                aliasesViewModel.save(it)
+                aliasTarget = null
+            },
+            onRemove = {
+                aliasesViewModel.delete(it)
+                aliasTarget = null
+            },
+            onDismiss = { aliasTarget = null },
+        )
     }
 
     if (showSimulation) {
@@ -265,6 +288,7 @@ private fun PendingCard(
     onConfirm: () -> Unit,
     onDiscard: () -> Unit,
     onCategoryChange: (Category) -> Unit,
+    onRename: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
 
@@ -279,7 +303,10 @@ private fun PendingCard(
                 transaction.sourceApp,
                 "${UiFormat.dayMonth(transaction.occurredAt)} às ${UiFormat.time(transaction.occurredAt)}",
             ).joinToString(" · "),
-            modifier = Modifier.fillMaxWidth(),
+            // tocar no lançamento abre o diálogo de apelido
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClickLabel = "Dar apelido", onClick = onRename),
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Row(

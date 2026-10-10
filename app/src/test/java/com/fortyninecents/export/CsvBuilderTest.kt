@@ -36,13 +36,13 @@ class CsvBuilderTest {
 
         assertTrue(csv.startsWith(CsvBuilder.BOM))
         val lines = csv.removePrefix(CsvBuilder.BOM).split("\r\n")
-        assertEquals("\"id\",\"data\",\"hora\",\"descricao\",\"categoria\",\"tipo\",\"valor\",\"origem\"", lines[0])
+        assertEquals("\"id\",\"data\",\"hora\",\"descricao\",\"categoria\",\"tipo\",\"valor\",\"origem\",\"identificador_original\"", lines[0])
         assertEquals(
-            "\"1\",\"05/10/2026\",\"13:00\",\"Mercado \"\"Jullius\"\"\",\"Mercado\",\"Despesa\",\"-40,00\",\"Manual\"",
+            "\"1\",\"05/10/2026\",\"13:00\",\"Mercado \"\"Jullius\"\"\",\"Mercado\",\"Despesa\",\"-40,00\",\"Manual\",\"Mercado \"\"Jullius\"\"\"",
             lines[1],
         )
         assertEquals(
-            "\"2\",\"06/10/2026\",\"09:05\",\"Depósito\",\"Receita\",\"Receita\",\"10,00\",\"Notificação\"",
+            "\"2\",\"06/10/2026\",\"09:05\",\"Depósito\",\"Receita\",\"Receita\",\"10,00\",\"Notificação\",\"Depósito\"",
             lines[2],
         )
         assertEquals("", lines[3])
@@ -66,5 +66,22 @@ class CsvBuilderTest {
         assertTrue(rows[5].contains(",\"Loja normal\","))
         // valor negativo continua numérico, sem apóstrofo
         rows.forEach { assertTrue(it.contains(",\"-1,00\",")) }
+    }
+
+    @Test
+    fun `descricao usa o apelido e mantem o identificador original no fim`() {
+        val csv = builder.build(
+            listOf(
+                Transaction(
+                    id = 4, title = "PAG*JOSEDASILVA", nickname = "Feira do Zé", amountCents = 2500,
+                    type = TransactionType.EXPENSE, category = Category.MERCADO, occurredAt = millis(2026, 10, 5, 8, 0),
+                ),
+            ),
+        )
+        val row = csv.removePrefix(CsvBuilder.BOM).split("\r\n")[1]
+        assertEquals(
+            "\"4\",\"05/10/2026\",\"08:00\",\"Feira do Zé\",\"Mercado\",\"Despesa\",\"-25,00\",\"Manual\",\"PAG*JOSEDASILVA\"",
+            row,
+        )
     }
 }

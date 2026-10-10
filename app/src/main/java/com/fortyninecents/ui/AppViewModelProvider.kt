@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.fortyninecents.FortyNineCentsApp
 import com.fortyninecents.di.AppContainer
+import com.fortyninecents.ui.aliases.AliasesViewModel
 import com.fortyninecents.ui.home.HomeViewModel
 import com.fortyninecents.ui.review.ReviewViewModel
 import com.fortyninecents.ui.transactions.TransactionsViewModel
@@ -16,6 +17,7 @@ object AppViewModelProvider {
     val Factory: ViewModelProvider.Factory = viewModelFactory {
         initializer { HomeViewModel(container().repository, container().classifier) }
         initializer { TransactionsViewModel(container().repository, container().csvExporter) }
+        initializer { AliasesViewModel(container().aliases) }
         initializer { ReviewViewModel(container().repository, container().notificationProcessor, container().settings) }
     }
 

@@ -1,5 +1,6 @@
 package com.fortyninecents.notification
 
+import com.fortyninecents.data.repository.AliasRepository
 import com.fortyninecents.data.repository.TransactionRepository
 import com.fortyninecents.domain.CategoryClassifier
 import com.fortyninecents.domain.Transaction
@@ -15,6 +16,7 @@ class NotificationProcessor(
     private val parser: NotificationParser,
     private val classifier: CategoryClassifier,
     private val repository: TransactionRepository,
+    private val aliases: AliasRepository,
 ) {
 
     sealed interface Result {
@@ -32,11 +34,16 @@ class NotificationProcessor(
     ): Result {
         val parsed = parser.parse(title, text, postedAt) ?: return Result.NotATransaction
 
+        // o apelido costuma ser mais descritivo ("Feira do Zé" x "PAG*JOSEDASILVA"): ajuda a categorizar
+        val nickname = aliases.resolver().nicknameFor(parsed.description)
+        val categoryHint = listOfNotNull(nickname, parsed.description).joinToString(" ")
+
         val transaction = Transaction(
             title = parsed.description,
+            nickname = nickname,
             amountCents = parsed.amountCents,
             type = parsed.type,
-            category = classifier.classify(parsed.description, parsed.type),
+            category = classifier.classify(categoryHint, parsed.type),
             occurredAt = parsed.occurredAt,
             source = TransactionSource.NOTIFICATION,
             status = TransactionStatus.PENDING,

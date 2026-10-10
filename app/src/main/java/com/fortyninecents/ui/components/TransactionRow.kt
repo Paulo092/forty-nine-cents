@@ -31,12 +31,14 @@ import com.fortyninecents.domain.TransactionType
 import com.fortyninecents.ui.theme.AppTheme
 import com.fortyninecents.util.Money
 
-/** Linha de lançamento: ícone da categoria, descrição e valor colorido (vermelho/verde). */
+/** Linha de lançamento: ícone da categoria, descrição (apelido, se houver) e valor colorido (vermelho/verde). */
 @Composable
 fun TransactionRow(
     transaction: Transaction,
     modifier: Modifier = Modifier,
     subtitle: String = defaultSubtitle(transaction),
+    /** Mostra, em letra pequena, o identificador do banco quando o lançamento tem apelido. */
+    showOriginalTitle: Boolean = false,
 ) {
     val money = AppTheme.money
     val amountColor = if (transaction.type == TransactionType.EXPENSE) money.expense else money.income
@@ -49,12 +51,21 @@ fun TransactionRow(
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                text = transaction.title.uppercase(),
+                text = transaction.displayTitle.uppercase(),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (showOriginalTitle && transaction.nickname != null) {
+                Text(
+                    text = transaction.title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (transaction.source == TransactionSource.NOTIFICATION) {
                     Icon(

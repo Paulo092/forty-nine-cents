@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter
  * Gera CSV (RFC 4180) pensado para o Google Sheets/Excel em português:
  * - separador vírgula, todos os campos entre aspas;
  * - datas dd/MM/yyyy e valores com vírgula decimal ("-40,00"), que o Sheets em pt-BR reconhece como número;
+ * - "descricao" traz o apelido (se houver) e "identificador_original" o texto como veio do banco;
  * - BOM UTF-8 no início para o Excel não quebrar os acentos;
  * - textos vindos de fora (estabelecimento, nome de quem mandou o Pix) são neutralizados contra
  *   "CSV injection": se começarem com = + - @ ou tab/CR, ganham um apóstrofo na frente para a
@@ -32,11 +33,12 @@ class CsvBuilder(private val zone: ZoneId = ZoneId.systemDefault()) {
                     t.id.toString(),
                     dateFormat.format(dateTime),
                     timeFormat.format(dateTime),
-                    safeText(t.title),
+                    safeText(t.displayTitle),
                     safeText(t.category.label),
                     if (t.type == TransactionType.EXPENSE) "Despesa" else "Receita",
                     Money.formatPlain(t.signedCents),
                     if (t.source == TransactionSource.NOTIFICATION) "Notificação" else "Manual",
+                    safeText(t.title),
                 ),
             )
         }
@@ -56,6 +58,6 @@ class CsvBuilder(private val zone: ZoneId = ZoneId.systemDefault()) {
 
         /** Caracteres que fazem Sheets/Excel interpretar a célula como fórmula (inclui as versões de largura total). */
         private val FORMULA_TRIGGERS = setOf('=', '+', '-', '@', '\t', '\r', '\uFF1D', '\uFF0B', '\uFF0D', '\uFF20')
-        val HEADER = listOf("id", "data", "hora", "descricao", "categoria", "tipo", "valor", "origem")
+        val HEADER = listOf("id", "data", "hora", "descricao", "categoria", "tipo", "valor", "origem", "identificador_original")
     }
 }

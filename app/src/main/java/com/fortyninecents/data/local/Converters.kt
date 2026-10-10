@@ -1,6 +1,7 @@
 package com.fortyninecents.data.local
 
 import androidx.room.TypeConverter
+import com.fortyninecents.domain.AliasMatch
 import com.fortyninecents.domain.Category
 import com.fortyninecents.domain.TransactionSource
 import com.fortyninecents.domain.TransactionStatus
@@ -19,4 +20,7 @@ class Converters {
 
     @TypeConverter fun fromStatus(value: TransactionStatus): String = value.name
     @TypeConverter fun toStatus(value: String): TransactionStatus = TransactionStatus.valueOf(value)
+
+    @TypeConverter fun fromAliasMatch(value: AliasMatch): String = value.name
+    @TypeConverter fun toAliasMatch(value: String): AliasMatch = AliasMatch.valueOf(value)
 }

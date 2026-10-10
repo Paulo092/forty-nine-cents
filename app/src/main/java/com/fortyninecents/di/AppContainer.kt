@@ -2,6 +2,7 @@ package com.fortyninecents.di
 
 import android.content.Context
 import com.fortyninecents.data.local.AppDatabase
+import com.fortyninecents.data.repository.AliasRepository
 import com.fortyninecents.data.repository.TransactionRepository
 import com.fortyninecents.data.settings.SettingsRepository
 import com.fortyninecents.domain.CategoryClassifier
@@ -19,7 +20,9 @@ class AppContainer(context: Context) {
 
     private val database: AppDatabase by lazy { AppDatabase.build(appContext) }
 
-    val repository: TransactionRepository by lazy { TransactionRepository(database.transactionDao()) }
+    val aliases: AliasRepository by lazy { AliasRepository(database.aliasDao()) }
+
+    val repository: TransactionRepository by lazy { TransactionRepository(database.transactionDao(), aliases) }
 
     val settings: SettingsRepository by lazy { SettingsRepository(appContext) }
 
@@ -28,6 +31,6 @@ class AppContainer(context: Context) {
     val csvExporter: CsvExporter by lazy { CsvExporter(appContext) }
 
     val notificationProcessor: NotificationProcessor by lazy {
-        NotificationProcessor(NotificationParser(), classifier, repository)
+        NotificationProcessor(NotificationParser(), classifier, repository, aliases)
     }
 }

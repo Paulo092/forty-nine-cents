@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
@@ -55,6 +56,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fortyninecents.domain.Transaction
 import com.fortyninecents.ui.AppViewModelProvider
+import com.fortyninecents.ui.aliases.AliasesViewModel
+import com.fortyninecents.ui.aliases.TransactionAliasDialog
 import com.fortyninecents.ui.components.EmptyState
 import com.fortyninecents.ui.components.TransactionRow
 import com.fortyninecents.ui.components.UiFormat
@@ -65,9 +68,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun TransactionsScreen(
     onBack: () -> Unit,
+    onOpenAliases: () -> Unit,
     viewModel: TransactionsViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    aliasesViewModel: AliasesViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val aliases by aliasesViewModel.aliases.collectAsStateWithLifecycle()
+    var aliasTarget by remember { mutableStateOf<Transaction?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     var menuOpen by remember { mutableStateOf(false) }
@@ -86,7 +93,7 @@ fun TransactionsScreen(
                 is TransactionsEvent.Deleted -> launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     val result = snackbarHostState.showSnackbar(
-                        message = "\"${event.transaction.title}\" excluído",
+                        message = "\"${event.transaction.displayTitle}\" excluído",
                         actionLabel = "Desfazer",
                         duration = SnackbarDuration.Short,
                     )
@@ -107,6 +114,9 @@ fun TransactionsScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onOpenAliases) {
+                        Icon(Icons.AutoMirrored.Filled.Label, contentDescription = "Apelidos")
+                    }
                     if (state.isExporting) {
                         CircularProgressIndicator(Modifier.padding(12.dp).size(24.dp), strokeWidth = 2.dp)
                     } else {
@@ -149,6 +159,17 @@ fun TransactionsScreen(
             }
             item(key = "summary") { Summary(state) }
 
+            if (aliases?.isEmpty() == true && state.groups.isNotEmpty()) {
+                item(key = "alias-hint") {
+                    Text(
+                        "Dica: toque em um lançamento para dar um apelido ao identificador.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                    )
+                }
+            }
+
             if (state.isEmpty) {
                 item(key = "empty") {
                     EmptyState(
@@ -162,10 +183,30 @@ fun TransactionsScreen(
             state.groups.forEach { group ->
                 item(key = "header-${group.date}") { DayHeader(group) }
                 items(group.items, key = { it.id }) { transaction ->
-                    SwipeToDeleteRow(transaction, onDelete = { viewModel.delete(transaction) })
+                    SwipeToDeleteRow(
+                        transaction = transaction,
+                        onClick = { aliasTarget = transaction },
+                        onDelete = { viewModel.delete(transaction) },
+                    )
                 }
             }
         }
+    }
+
+    aliasTarget?.let { transaction ->
+        TransactionAliasDialog(
+            transaction = transaction,
+            aliases = aliases.orEmpty(),
+            onSave = {
+                aliasesViewModel.save(it)
+                aliasTarget = null
+            },
+            onRemove = {
+                aliasesViewModel.delete(it)
+                aliasTarget = null
+            },
+            onDismiss = { aliasTarget = null },
+        )
     }
 }
 
@@ -232,7 +273,7 @@ private fun DayHeader(group: DayGroup) {
 }
 
 @Composable
-private fun SwipeToDeleteRow(transaction: Transaction, onDelete: () -> Unit) {
+private fun SwipeToDeleteRow(transaction: Transaction, onClick: () -> Unit, onDelete: () -> Unit) {
     val state = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -259,6 +300,7 @@ private fun SwipeToDeleteRow(transaction: Transaction, onDelete: () -> Unit) {
         },
     ) {
         Surface(
+            onClick = onClick,
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
             tonalElevation = 1.dp,
@@ -270,6 +312,7 @@ private fun SwipeToDeleteRow(transaction: Transaction, onDelete: () -> Unit) {
                     UiFormat.time(transaction.occurredAt),
                     transaction.sourceApp,
                 ).joinToString(" · "),
+                showOriginalTitle = true,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

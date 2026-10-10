@@ -77,7 +77,7 @@ class ReviewViewModel(
             messages.send(
                 when (result) {
                     is NotificationProcessor.Result.Captured ->
-                        "Reconhecido: ${result.transaction.title} – ${Money.format(result.transaction.amountCents)}"
+                        "Reconhecido: ${result.transaction.displayTitle} – ${Money.format(result.transaction.amountCents)}"
                     NotificationProcessor.Result.Duplicate -> "Notificação repetida, ignorada"
                     NotificationProcessor.Result.NotATransaction -> "Texto não reconhecido como transação"
                 },
