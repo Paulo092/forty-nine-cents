@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 12+.
+    Backup na nuvem (Google): NÃO leva o banco de lançamentos — dados financeiros não saem do aparelho.
+    Transferência direta entre aparelhos (cabo/Wi-Fi na troca de celular): leva tudo, para não perder o histórico.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="forty_nine_cents.db" />
+        <exclude domain="database" path="forty_nine_cents.db-wal" />
+        <exclude domain="database" path="forty_nine_cents.db-shm" />
+        <exclude domain="database" path="forty_nine_cents.db-journal" />
+    </cloud-backup>
+</data-extraction-rules>
